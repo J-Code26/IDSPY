@@ -1,0 +1,30 @@
+============================================================
+UNIVERSITY NETWORK IDS - ANALYSIS REPORT #1
+============================================================
+Generated On   : 2026-11-17 13:07:10
+Dataset Source : Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv
+Total Model Updates to Date: 17075
+
+--- TRAFFIC CLASSIFICATION SUMMARY ---
+Total Flows Analyzed : 286467
+Confirmed Threats    : 154525
+Benign Activity      : 124607
+Uncertain (Flagged)  : 7335
+ML Weight Adjustments: 8433
+
+--- PERFORMANCE METRICS (VS. MILESTONE 2 TARGETS) ---
+Accuracy  : 98.00%  (Target: >= 85.00%)
+Recall    : 96.81%
+Precision : 99.57%
+F1-Score  : 98.17%
+FPR       : 0.52%  (Target: <= 15.00%)
+
+--- CURRENT LEARNED FEATURE WEIGHTS ---
+Bias: -0.95519
+  Destination Port        : -0.59628
+  Flow Duration           : +1.16002
+  Total Fwd Packets       : -3.93370
+  Total Backward Packets  : +0.05351
+  Flow Packets/s          : +0.82586
+  Flow Bytes/s            : -0.12114
+============================================================

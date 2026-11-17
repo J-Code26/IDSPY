@@ -1,0 +1,6 @@
+*.db
+*.csv
+__pycache__/
+.idea/
+reports/
+.DS_Store
