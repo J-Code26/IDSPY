@@ -25,4 +25,18 @@ First, go to https://www.unb.ca/cic/datasets/ids-2017.html to download the datab
 
 3. Run the cli.py file either within an IDE or on your terminal by using cd <where ever your project folder is> and within that directory, run python3 with the cli.py file to begin.
 
-4. The program will automatically keep track of analysis through a log, while also creating an exported text file of each completed analysis. 
+4. The program will automatically keep track of analysis through a log, while also creating an exported text file of each completed analysis.
+
+## Detailed instructions
+
+1. Read previous instructions if needed. 
+2. Review the README information to understand how the program works.
+3. You can clone the repository through an IDE or terminal, open the project folder, and run the cli.py file (using python3 cli.py), which is the main interface script—no external package installations are required.
+4. Once that is run, the main terminal menu will pop up.
+5. Now that the program is set up, follow the dataset link in the README (the CIC-IDS2017 dataset from the Canadian Institute for Cybersecurity) and download it to your personal or work computer; you may have to enter your email and occupation on their site to access the download.   
+6. Extract the files and make sure to locate the PortScan CSV (and optionally the DDoS CSV for unseen testing).   
+7. Once everything is downloaded, navigate to the CSV file on your computer and copy its full file path.
+8. Go back to the terminal where the script is running and continue with the prompts.
+9. Select Option 1 to run the initial analysis. Choose your preferred row limit and learning settings, and when it asks for the path to the CSV, paste the copied path (without extra quotes if needed).
+10. The live progress counter will track the rows and notify you when it is finished, and you can then view the summary on screen or navigate to the other menu options to inspect specific alerts, review uncertain flags, and see past sessions and reports.
+11. Lastly, you can exit at any time, and for each completed run, you can review the exported .txt version inside the reports/ folder within the project directory.
