@@ -3,7 +3,9 @@ import json
 import math
 import os
 import sqlite3
+import time
 from datetime import datetime
+
 
 DB_FILE = "university_ids.db"
 MODEL_FILE = "model_weights.json"
@@ -81,6 +83,7 @@ class AdaptiveIDSEngine:
 
             CREATE TABLE IF NOT EXISTS Records (
                 RecordID INTEGER PRIMARY KEY AUTOINCREMENT,
+                RunNumber INTEGER DEFAULT 1,
                 LogID INTEGER,
                 TimeCreated TEXT,
                 NormalizedVector TEXT,
@@ -94,10 +97,11 @@ class AdaptiveIDSEngine:
                 ThreatProbability REAL,
                 Status TEXT,
                 ReviewedByHuman INTEGER DEFAULT 0,
+                ActionTaken TEXT DEFAULT 'NONE',
                 FOREIGN KEY(RecordID) REFERENCES Records(RecordID)
             );
-                
-                CREATE TABLE IF NOT EXISTS Reports (
+
+            CREATE TABLE IF NOT EXISTS Reports (
                 ReportID INTEGER PRIMARY KEY AUTOINCREMENT,
                 TimeGenerated TEXT,
                 SourceFile TEXT,
@@ -110,23 +114,20 @@ class AdaptiveIDSEngine:
                 F1Score REAL,
                 FPR REAL
             );
-            CREATE TABLE IF NOT EXISTS Alerts (
-                AlertID INTEGER PRIMARY KEY AUTOINCREMENT,
-                RecordID INTEGER,
-                ThreatClassification TEXT,
-                ThreatProbability REAL,
-                Status TEXT,
-                ReviewedByHuman INTEGER DEFAULT 0,
-                ActionTaken TEXT DEFAULT 'NONE',
-                FOREIGN KEY(RecordID) REFERENCES Records(RecordID)
-            );
             """
         )
-        # Safely add ActionTaken column if upgrading an older university_ids.db
+
+        # Safely add columns if upgrading an older university_ids.db
         cur.execute("PRAGMA table_info(Alerts)")
         columns = [col[1] for col in cur.fetchall()]
         if "ActionTaken" not in columns:
             cur.execute("ALTER TABLE Alerts ADD COLUMN ActionTaken TEXT DEFAULT 'NONE'")
+
+        cur.execute("PRAGMA table_info(Records)")
+        rec_cols = [col[1] for col in cur.fetchall()]
+        if "RunNumber" not in rec_cols:
+            cur.execute("ALTER TABLE Records ADD COLUMN RunNumber INTEGER DEFAULT 1")
+
         conn.commit()
         conn.close()
 
@@ -203,7 +204,13 @@ class AdaptiveIDSEngine:
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
 
+        # Determine which analysis run number this is (1, 2, 3, ...)
+        cur.execute("SELECT COALESCE(MAX(ReportID), 0) + 1 FROM Reports")
+        run_number = cur.fetchone()[0]
+
         stats = {
+            "run_number": run_number,
+            "elapsed_seconds": 0.0,
             "total": 0,
             "threats": 0,
             "benign": 0,
@@ -214,6 +221,8 @@ class AdaptiveIDSEngine:
             "fn": 0,
             "weight_adjustments": 0,
         }
+
+        start_time = time.time()
 
         with open(csv_path, "r", encoding="utf-8", errors="replace") as f:
             reader = csv.DictReader(f)
@@ -250,8 +259,8 @@ class AdaptiveIDSEngine:
                 log_id = cur.lastrowid
 
                 cur.execute(
-                    "INSERT INTO Records (LogID, TimeCreated, NormalizedVector) VALUES (?, ?, ?)",
-                    (log_id, datetime.now().isoformat(timespec="seconds"), json.dumps(norm_vec)),
+                    "INSERT INTO Records (RunNumber, LogID, TimeCreated, NormalizedVector) VALUES (?, ?, ?, ?)",
+                    (run_number, log_id, datetime.now().isoformat(timespec="seconds"), json.dumps(norm_vec)),
                 )
                 record_id = cur.lastrowid
 
@@ -293,6 +302,22 @@ class AdaptiveIDSEngine:
                     if auto_learn and (wrong_prediction or classification == "UNCERTAIN"):
                         self.adapt_weights(norm_vec, is_actual_threat, prob)
                         stats["weight_adjustments"] += 1
+
+                # Live terminal progress counter
+                if stats["total"] % 250 == 0 or (limit and stats["total"] == limit):
+                    print(
+                        f"\r[Run #{run_number}] Analyzed: {stats['total']} rows | "
+                        f"Threats: {stats['threats']} | Uncertain: {stats['uncertain']} | "
+                        f"Weight Updates: {stats['weight_adjustments']}",
+                        end="",
+                        flush=True,
+                    )
+
+        stats["elapsed_seconds"] = round(time.time() - start_time, 2)
+        print(
+            f"\r[Run #{run_number}] Complete! Total Analyzed: {stats['total']} rows in {stats['elapsed_seconds']}s"
+            + " " * 25
+        )
 
         conn.commit()
         conn.close()
@@ -422,6 +447,8 @@ class AdaptiveIDSEngine:
             f.write("=" * 60 + "\n")
             f.write(f"Generated On   : {timestamp}\n")
             f.write(f"Dataset Source : {base_name}\n")
+            f.write(f"Analysis Run # : {stats.get('run_number', report_id)}\n")
+            f.write(f"Processing Time: {stats.get('elapsed_seconds', 0.0)} seconds\n")
             f.write(f"Total Model Updates to Date: {self.model['training_updates']}\n\n")
 
             f.write("--- TRAFFIC CLASSIFICATION SUMMARY ---\n")

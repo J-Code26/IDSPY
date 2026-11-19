@@ -57,12 +57,13 @@ def main():
             try:
                 print("\nProcessing traffic records and updating database...")
                 stats = engine.process_csv(csv_path, auto_learn=auto_learn, limit=limit)
-                print("\n--- ANALYSIS REPORT ---")
+                print(f"\n--- ANALYSIS REPORT (RUN #{stats['run_number']}) ---")
                 print(f"Records Analyzed   : {stats['total']}")
                 print(f"Threats Detected   : {stats['threats']}")
                 print(f"Benign Flows       : {stats['benign']}")
                 print(f"Uncertain (Flagged): {stats['uncertain']}")
                 print(f"Weight Adjustments : {stats['weight_adjustments']}")
+                print(f"Records Analyzed   : {stats['total']} (in {stats['elapsed_seconds']}s)")
 
                 metrics = calc_metrics(stats)
                 if metrics:

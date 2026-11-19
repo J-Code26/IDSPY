@@ -1,9 +1,9 @@
 {
     "learning_rate": 0.08,
-    "bias": -1.00949,
+    "bias": -0.91517,
     "weights": {
         "Destination Port": -0.6211,
-        "Flow Duration": 1.04498,
+        "Flow Duration": 0.49144,
         "Total Fwd Packets": -2.5614,
         "Total Backward Packets": -0.17031,
         "Flow Packets/s": 0.88676,
@@ -17,5 +17,5 @@
         "Flow Packets/s": 100000.0,
         "Flow Bytes/s": 10000000.0
     },
-    "training_updates": 8641
+    "training_updates": 8736
 }
